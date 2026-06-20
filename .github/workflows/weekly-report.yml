@@ -2,7 +2,7 @@ name: Weekly Investment Report
 
 on:
   schedule:
-    - cron: "0 22 * * 0"  # 매주 일요일 22:00 UTC = 월요일 07:00 KST
+    - cron: "1 18 * * 0"  # 매주 일요일 18:01 UTC = 월요일 03:01 KST
   workflow_dispatch:       # 수동 실행 허용
 
 permissions:
