@@ -8,6 +8,8 @@
 import os
 import sys
 import json
+import smtplib
+from email.mime.text import MIMEText
 from datetime import date
 
 try:
@@ -227,6 +229,34 @@ def main():
         f.write(report)
 
     print(f"\n✅ 리포트 저장 완료: {out_path}", flush=True)
+
+    # 4단계: 네이버 메일 발송
+    send_naver_email(report, week_label)
+
+
+def send_naver_email(report, week_label):
+    email = os.environ.get("NAVER_EMAIL")
+    password = os.environ.get("NAVER_APP_PASSWORD")
+
+    if not email or not password:
+        print("ℹ️  NAVER_EMAIL 또는 NAVER_APP_PASSWORD 미설정 — 메일 발송 건너뜀", flush=True)
+        return
+
+    subject = f"[나스닥 주간보고] {week_label}"
+    msg = MIMEText(report, "plain", "utf-8")
+    msg["Subject"] = subject
+    msg["From"] = email
+    msg["To"] = email
+
+    try:
+        with smtplib.SMTP("smtp.naver.com", 587) as smtp:
+            smtp.ehlo()
+            smtp.starttls()
+            smtp.login(email, password)
+            smtp.sendmail(email, email, msg.as_string())
+        print(f"📧 메일 발송 완료 → {email}", flush=True)
+    except Exception as e:
+        print(f"⚠️  메일 발송 실패 (리포트 저장에는 영향 없음): {e}", file=sys.stderr)
 
 
 if __name__ == "__main__":
