@@ -231,16 +231,16 @@ def main():
 
     print(f"\n✅ 리포트 저장 완료: {out_path}", flush=True)
 
-    # 4단계: 네이버 메일 발송
-    send_naver_email(report, week_label)
+    # 4단계: Gmail 메일 발송
+    send_gmail_email(report, week_label)
 
 
-def send_naver_email(report, week_label):
-    email = os.environ.get("NAVER_EMAIL")
-    password = os.environ.get("NAVER_APP_PASSWORD")
+def send_gmail_email(report, week_label):
+    email = os.environ.get("GMAIL_ADDRESS")
+    password = os.environ.get("GMAIL_APP_PASSWORD")
 
     if not email or not password:
-        print("ℹ️  NAVER_EMAIL 또는 NAVER_APP_PASSWORD 미설정 — 메일 발송 건너뜀", flush=True)
+        print("ℹ️  GMAIL_ADDRESS 또는 GMAIL_APP_PASSWORD 미설정 — 메일 발송 건너뜀", flush=True)
         return
 
     subject = f"[나스닥 주간보고] {week_label}"
@@ -250,7 +250,7 @@ def send_naver_email(report, week_label):
     msg["To"] = email
 
     try:
-        with smtplib.SMTP("smtp.naver.com", 587) as smtp:
+        with smtplib.SMTP("smtp.gmail.com", 587) as smtp:
             smtp.ehlo()
             smtp.starttls()
             smtp.login(email, password)
