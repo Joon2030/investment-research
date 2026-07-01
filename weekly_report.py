@@ -28,7 +28,8 @@ TICKERS = [
     "COST", "NFLX", "ASML", "AMD", "QCOM", "INTU", "TXN", "ISRG", "AMGN", "PEP", "ADBE",
 ]
 
-REPORT_DIR = os.path.expanduser("~/investment-research/reports")
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+REPORT_DIR = os.path.join(SCRIPT_DIR, "reports")
 
 
 def get_week_label():
