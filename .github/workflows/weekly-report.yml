@@ -27,8 +27,8 @@ jobs:
       - name: Run weekly report
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          NAVER_EMAIL: ${{ secrets.NAVER_EMAIL }}
-          NAVER_APP_PASSWORD: ${{ secrets.NAVER_APP_PASSWORD }}
+          GMAIL_ADDRESS: ${{ secrets.GMAIL_ADDRESS }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
         run: python weekly_report.py
 
       - name: Commit and push report
