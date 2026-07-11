@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>투자 리서치 대시보드</title>
+<style>
+
+:root {
+  --bg: #0b0e14;
+  --bg-elevated: #12161f;
+  --bg-hover: #191f2c;
+  --border: #232838;
+  --text: #e6e9f0;
+  --text-dim: #8b93a7;
+  --accent: #34d399;
+  --accent-soft: rgba(52, 211, 153, 0.12);
+  --link: #60a5fa;
+  --shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo',
+    'Segoe UI', Roboto, 'Malgun Gothic', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.app { min-height: 100vh; display: flex; flex-direction: column; }
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: rgba(11, 14, 20, 0.9);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+}
+.topbar-inner { max-width: 1400px; margin: 0 auto; padding: 16px 24px; }
+.brand { display: flex; align-items: center; gap: 12px; }
+.brand-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+}
+.brand-text h1 { margin: 0; font-size: 17px; font-weight: 700; }
+.brand-text p { margin: 2px 0 0; font-size: 12.5px; color: var(--text-dim); }
+
+.layout {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.sidebar {
+  border-right: 1px solid var(--border);
+  height: calc(100vh - 69px);
+  position: sticky;
+  top: 69px;
+  overflow: hidden;
+}
+.sidebar-scroll {
+  height: 100%;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.report-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-left: 3px solid transparent;
+  border-radius: 10px;
+  padding: 12px 14px;
+  cursor: pointer;
+  color: var(--text);
+  font-family: inherit;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+}
+.report-item:hover { background: var(--bg-hover); }
+.report-item.active {
+  background: var(--accent-soft);
+  border-left-color: var(--accent);
+}
+
+.report-item-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.report-date { font-size: 11.5px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+.latest-badge {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--accent);
+  background: var(--accent-soft);
+  padding: 2px 7px;
+  border-radius: 999px;
+  letter-spacing: 0.02em;
+}
+.report-item-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.4;
+  margin-bottom: 6px;
+}
+.report-item-summary {
+  font-size: 12px;
+  color: var(--text-dim);
+  line-height: 1.5;
+  margin-bottom: 6px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.report-item-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+.tag {
+  font-size: 10.5px;
+  color: var(--text-dim);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  padding: 1px 7px;
+  border-radius: 999px;
+}
+
+.main {
+  padding: 32px 40px 80px;
+  min-width: 0;
+  height: calc(100vh - 69px);
+  overflow-y: auto;
+}
+
+.report { display: none; max-width: 820px; }
+.report.active { display: block; }
+
+.report-header { margin-bottom: 28px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
+.report-header h1 { font-size: 26px; line-height: 1.35; margin: 0 0 12px; }
+.report-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.report-meta-date { font-size: 13px; color: var(--text-dim); }
+
+.prose { font-size: 15px; line-height: 1.75; color: var(--text); }
+.prose h1, .prose h2, .prose h3, .prose h4 { line-height: 1.4; margin: 32px 0 14px; }
+.prose h1 { font-size: 22px; }
+.prose h2 { font-size: 19px; padding-top: 4px; border-top: 1px solid var(--border); padding-top: 24px; }
+.prose h2:first-child { border-top: none; padding-top: 0; }
+.prose h3 { font-size: 16.5px; }
+.prose p { margin: 0 0 16px; color: var(--text); }
+.prose strong { color: #fff; font-weight: 700; }
+.prose em { color: var(--text); }
+.prose a { color: var(--link); text-decoration: none; border-bottom: 1px solid rgba(96, 165, 250, 0.35); }
+.prose a:hover { border-bottom-color: var(--link); }
+.prose ul, .prose ol { margin: 0 0 16px; padding-left: 22px; }
+.prose li { margin-bottom: 8px; }
+.prose blockquote {
+  margin: 0 0 16px;
+  padding: 12px 16px;
+  border-left: 3px solid var(--accent);
+  background: var(--accent-soft);
+  border-radius: 0 8px 8px 0;
+  color: var(--text-dim);
+}
+.prose blockquote p { margin: 0; color: var(--text); }
+.prose code {
+  background: rgba(255, 255, 255, 0.08);
+  padding: 2px 6px;
+  border-radius: 5px;
+  font-size: 0.88em;
+  font-family: 'SF Mono', Menlo, Consolas, monospace;
+}
+.prose pre {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  overflow-x: auto;
+  margin: 0 0 16px;
+}
+.prose pre code { background: none; padding: 0; }
+.prose hr { border: none; border-top: 1px solid var(--border); margin: 28px 0; }
+.prose img { max-width: 100%; border-radius: 8px; }
+
+.table-wrap { overflow-x: auto; margin: 0 0 20px; border: 1px solid var(--border); border-radius: 10px; }
+.prose table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+.prose th, .prose td { padding: 10px 14px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+.prose thead th {
+  background: var(--bg-elevated);
+  color: var(--text-dim);
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.prose tbody tr:last-child td { border-bottom: none; }
+.prose tbody tr:hover { background: rgba(255, 255, 255, 0.03); }
+
+.empty-state {
+  padding: 60px 24px;
+  text-align: center;
+  color: var(--text-dim);
+}
+.empty-state h2 { color: var(--text); margin-bottom: 8px; }
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; }
+  .sidebar {
+    position: sticky;
+    top: 69px;
+    height: auto;
+    max-height: none;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+    z-index: 10;
+  }
+  .sidebar-scroll {
+    flex-direction: row;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 12px 16px;
+  }
+  .report-item {
+    flex: 0 0 240px;
+    border-left: 1px solid var(--border);
+    border-bottom: 3px solid transparent;
+  }
+  .report-item.active { border-left: 1px solid var(--border); border-bottom-color: var(--accent); }
+  .report-item-summary { -webkit-line-clamp: 3; }
+  .main { height: auto; padding: 24px 18px 60px; }
+  .report-header h1 { font-size: 21px; }
+  .topbar-inner { padding: 14px 18px; }
+}
+
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <span class="brand-mark">IR</span>
+        <div class="brand-text">
+          <h1>투자 리서치 대시보드</h1>
+          <p>2개 리포트 · 마지막 빌드 2026-07-12 00:17</p>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <nav class="sidebar" aria-label="리포트 목록">
+      <div class="sidebar-scroll">
+      <button class="report-item active" data-slug="2026-w27" type="button">
+        <div class="report-item-top">
+          <span class="report-date">2026.07.01</span>
+          <span class="latest-badge">최신</span>
+        </div>
+        <div class="report-item-title">나스닥100 주간 투자 리포트 — 2026-W27</div>
+        <div class="report-item-summary">반도체·AI 하드웨어 랠리 재점화 — ASML+11.86%, AMD+11.75%가 이번 주 두 자릿수 급등하며 각각 52주 고점 대비 0.5%, 0.7%까지 근접했습니다. NVDA는 보합+0.02%이나 매출성장률 85.2%로 여전히 …</div><div class="report-item-tags"><span class="tag">주간</span></div>
+      </button>
+      <button class="report-item" data-slug="2026-w25" type="button">
+        <div class="report-item-top">
+          <span class="report-date">2026.06.20</span>
+          
+        </div>
+        <div class="report-item-title">나스닥100 주간 투자 리포트 — 2026-W25</div>
+        <div class="report-item-summary">반도체 섹터, 강력한 순환매 유입 — QCOM+11.41%, AMD+10.02%, TXN+8.67%, AVGO+6.69%, NVDA+2.84%가 일제히 상승하며 이번 주 시장을 견인했습니다. 특히 AI 가속기와 데이터센터 수요 모멘텀…</div><div class="report-item-tags"><span class="tag">주간</span></div>
+      </button>
+      </div>
+    </nav>
+
+    <main class="main">
+      <article class="report active" id="report-2026-w27">
+        <header class="report-header">
+          <h1>나스닥100 주간 투자 리포트 — 2026-W27</h1>
+          <div class="report-meta">
+            <span class="report-meta-date">📅 2026년 07월 01일</span>
+            <span class="tag">주간</span>
+          </div>
+        </header>
+        <div class="prose">
+<h1>나스닥100 주간 투자 리포트 — 2026-W27</h1>
+<blockquote><p><strong>분석일:</strong> 2026년 07월 01일 | 대상: 나스닥100 상위 20개 종목</p></blockquote>
+<hr>
+<h2>📌 주간 핵심 이슈 TOP 5</h2>
+<ol><li><strong>반도체·AI 하드웨어 랠리 재점화</strong> — ASML(+11.86%), AMD(+11.75%)가 이번 주 두 자릿수 급등하며 각각 52주 고점 대비 -0.5%, -0.7%까지 근접했습니다. NVDA는 보합(+0.02%)이나 매출성장률 85.2%로 여전히 최상위권입니다. AI 인프라 투자 사이클이 장비·GPU·팹리스로 확산되고 있음을 시사하며, 관련 종목의 모멘텀 강세가 지속되고 있습니다.</li><li><strong>QUALCOMM 급락, 유일한 역성장 종목</strong> — QCOM은 이번 주 -9.47%로 20종목 중 최악의 성과를 기록했으며, 매출성장률도 -3.5%로 유일하게 마이너스입니다. 52주 고점 대비 -28.9%로 조정 폭이 큽니다. 스마트폰 수요 부진과 AI 반도체 경쟁 심화가 압박 요인으로, 실적 회복 확인 전까지는 보수적 접근이 필요합니다.</li><li><strong>테슬라 단기 급반등 vs 극단적 밸류에이션</strong> — TSLA는 +10.22%로 강한 반등을 보였으나 PER 385.9배로 밸류에이션 부담이 극심합니다. 베타 1.8의 고변동성 특성상 단기 트레이딩 관점에서는 기회이나, 펀더멘털(매출성장 15.8%) 대비 주가 정당화가 어려워 추격 매수는 신중해야 합니다.</li><li><strong>대형 기술주의 고점 대비 깊은 조정 지속</strong> — INTU(-67.9%), ADBE(-47.0%), NFLX(-45.2%), ISRG(-34.1%), MSFT(-32.8%) 등 다수 종목이 52주 고점에서 크게 이탈해 있습니다. 특히 ADBE(PER 11.7)와 INTU(PER 15.9)는 낙폭 대비 밸류에이션이 낮아져 밸류 관점의 저가 매수 후보로 부상하고 있습니다.</li><li><strong>경기방어주 약세와 리스크 선호 확대</strong> — 방어주 PEP(-4.68%), COST(-2.32%)가 하락한 반면 고베타 성장주로 자금이 이동하는 &#x27;리스크온&#x27; 흐름이 관찰됩니다. GOOGL(+3.25%), AMGN(+4.35%) 등 실적 기반 종목의 견조한 상승이 동반되어, 시장의 위험 선호 심리가 회복 중임을 보여줍니다.</li></ol>
+<h2>📋 종목별 한줄 요약</h2>
+<ul><li><strong>NVDA (NVIDIA Corporation)</strong>: 매출성장 85.2%로 압도적, 주간 보합이나 AI 대장주 지위 굳건, 고점 대비 -15.4% 조정으로 매수 대기 유효.</li><li><strong>GOOGL (Alphabet Inc.)</strong>: +3.25% 상승에 PER 27.2배로 대형주 중 합리적, 매출성장 21.8%로 실적·주가 균형 우수.</li><li><strong>GOOG (Alphabet Inc.)</strong>: 클래스 C 주식으로 GOOGL과 동일 펀더멘털, +2.09% 견조한 흐름.</li><li><strong>AAPL (Apple Inc.)</strong>: -1.68% 약세, PER 35.1배·PBR 39.86배로 밸류 부담 존재하나 고점 대비 -8.8%로 상대적 방어력 양호.</li><li><strong>MSFT (Microsoft Corporation)</strong>: 고점 대비 -32.8%로 조정 깊음, PER 22.2배로 매력 회복, 매출성장 18.3% 견조해 리바운드 후보.</li><li><strong>AMZN (Amazon.com, Inc.)</strong>: +1.81% 반등, PER 31.7배·PBR 5.8배로 대형주 중 균형적, 소비 회복 수혜 기대.</li><li><strong>AVGO (Broadcom Inc.)</strong>: -0.63% 소폭 조정, 매출성장 47.9% 강력하나 PER 62.9배로 밸류 부담 상존.</li><li><strong>TSLA (Tesla, Inc.)</strong>: +10.22% 급등했으나 PER 385.9배로 극단적 고평가, 고변동성 트레이딩 종목.</li><li><strong>META (Meta Platforms, Inc.)</strong>: 보합(+0.19%)이나 PER 20.5배로 저평가, 매출성장 33.1% 우수, 고점 대비 -29.3%로 저가 매력.</li><li><strong>AMD (Advanced Micro Devices, Inc.)</strong>: +11.75% 급등, 52주 고점 근접, 매출성장 37.8% 강력하나 PER 192.4배로 과열 주의.</li><li><strong>ASML (ASML Holding N.V.)</strong>: +11.86% 급등하며 52주 고점 임박, 반도체 장비 독점력 부각, PBR 이상치 데이터 확인 필요.</li><li><strong>COST (Costco Wholesale Corporation)</strong>: -2.32% 약세, 방어주 특성(베타 0.87)에도 PER 46.9배로 밸류 부담.</li><li><strong>NFLX (Netflix, Inc.)</strong>: -1.95%, 고점 대비 -45.2%로 큰 폭 조정, PER 23.0배로 밸류 매력 부상.</li><li><strong>TXN (Texas Instruments Incorporated)</strong>: -2.07% 조정, PER 51.0배 부담이나 매출성장 18.6% 회복세 긍정적.</li><li><strong>AMGN (Amgen Inc.)</strong>: +4.35% 강세, 베타 0.42로 최저 변동성, 방어적 헬스케어 대안이나 매출성장 5.8%로 완만.</li><li><strong>QCOM (QUALCOMM Incorporated)</strong>: -9.47% 급락, 유일한 역성장(-3.5%), PER 19.9배로 저평가나 실적 반등 확인 필요.</li><li><strong>PEP (PepsiCo, Inc.)</strong>: -4.68% 약세, 베타 0.36 방어주이나 52주 저점 근접, 배당 매력으로 접근.</li><li><strong>ISRG (Intuitive Surgical, Inc.)</strong>: -1.36%, 52주 저점 근접(-34.1%), 매출성장 23.0% 견조해 반등 여지.</li><li><strong>ADBE (Adobe Inc.)</strong>: +3.84% 반등, PER 11.7배로 최저 수준, 고점 대비 -47%로 밸류 저가 매수 후보.</li><li><strong>INTU (Intuit Inc.)</strong>: +1.14%, 고점 대비 -67.9%로 최대 낙폭, PER 15.9배로 저평가 매력 부각.</li></ul>
+<h2>📊 밸류에이션 비교표</h2>
+<div class="table-wrap"><table><thead><tr><th style="text-align:left">종목</th><th style="text-align:right">현재가($)</th><th style="text-align:right">주간등락(%)</th><th style="text-align:right">시총(B$)</th><th style="text-align:right">PER</th><th style="text-align:right">PBR</th><th style="text-align:right">베타</th><th style="text-align:right">52주고점比(%)</th></tr></thead><tbody><tr><td style="text-align:left">NVDA</td><td style="text-align:right">200.09</td><td style="text-align:right">0.02</td><td style="text-align:right">4846.4</td><td style="text-align:right">30.7</td><td style="text-align:right">24.79</td><td style="text-align:right">2.2</td><td style="text-align:right">-15.4</td></tr><tr><td style="text-align:left">GOOGL</td><td style="text-align:right">357.37</td><td style="text-align:right">3.25</td><td style="text-align:right">4360.8</td><td style="text-align:right">27.2</td><td style="text-align:right">9.04</td><td style="text-align:right">1.24</td><td style="text-align:right">-12.5</td></tr><tr><td style="text-align:left">GOOG</td><td style="text-align:right">353.33</td><td style="text-align:right">2.09</td><td style="text-align:right">4311.5</td><td style="text-align:right">27.0</td><td style="text-align:right">8.94</td><td style="text-align:right">1.24</td><td style="text-align:right">-12.6</td></tr><tr><td style="text-align:left">AAPL</td><td style="text-align:right">289.36</td><td style="text-align:right">-1.68</td><td style="text-align:right">4249.9</td><td style="text-align:right">35.1</td><td style="text-align:right">39.86</td><td style="text-align:right">1.09</td><td style="text-align:right">-8.8</td></tr><tr><td style="text-align:left">MSFT</td><td style="text-align:right">373.02</td><td style="text-align:right">-0.25</td><td style="text-align:right">2771.0</td><td style="text-align:right">22.2</td><td style="text-align:right">6.69</td><td style="text-align:right">1.1</td><td style="text-align:right">-32.8</td></tr><tr><td style="text-align:left">AMZN</td><td style="text-align:right">238.34</td><td style="text-align:right">1.81</td><td style="text-align:right">2563.8</td><td style="text-align:right">31.7</td><td style="text-align:right">5.8</td><td style="text-align:right">1.44</td><td style="text-align:right">-14.4</td></tr><tr><td style="text-align:left">AVGO</td><td style="text-align:right">377.75</td><td style="text-align:right">-0.63</td><td style="text-align:right">1797.2</td><td style="text-align:right">62.9</td><td style="text-align:right">20.5</td><td style="text-align:right">1.43</td><td style="text-align:right">-23.7</td></tr><tr><td style="text-align:left">TSLA</td><td style="text-align:right">420.6</td><td style="text-align:right">10.22</td><td style="text-align:right">1579.7</td><td style="text-align:right">385.9</td><td style="text-align:right">19.21</td><td style="text-align:right">1.8</td><td style="text-align:right">-15.7</td></tr><tr><td style="text-align:left">META</td><td style="text-align:right">563.29</td><td style="text-align:right">0.19</td><td style="text-align:right">1429.9</td><td style="text-align:right">20.5</td><td style="text-align:right">5.87</td><td style="text-align:right">1.23</td><td style="text-align:right">-29.3</td></tr><tr><td style="text-align:left">AMD</td><td style="text-align:right">580.91</td><td style="text-align:right">11.75</td><td style="text-align:right">947.2</td><td style="text-align:right">192.4</td><td style="text-align:right">14.69</td><td style="text-align:right">2.49</td><td style="text-align:right">-0.7</td></tr><tr><td style="text-align:left">ASML</td><td style="text-align:right">1989.44</td><td style="text-align:right">11.86</td><td style="text-align:right">766.8</td><td style="text-align:right">67.6</td><td style="text-align:right">1801.2</td><td style="text-align:right">1.4</td><td style="text-align:right">-0.5</td></tr><tr><td style="text-align:left">COST</td><td style="text-align:right">935.47</td><td style="text-align:right">-2.32</td><td style="text-align:right">414.9</td><td style="text-align:right">46.9</td><td style="text-align:right">25.09</td><td style="text-align:right">0.87</td><td style="text-align:right">-14.7</td></tr><tr><td style="text-align:left">NFLX</td><td style="text-align:right">71.4</td><td style="text-align:right">-1.95</td><td style="text-align:right">300.7</td><td style="text-align:right">23.0</td><td style="text-align:right">9.66</td><td style="text-align:right">1.49</td><td style="text-align:right">-45.2</td></tr><tr><td style="text-align:left">TXN</td><td style="text-align:right">298.07</td><td style="text-align:right">-2.07</td><td style="text-align:right">271.3</td><td style="text-align:right">51.0</td><td style="text-align:right">16.17</td><td style="text-align:right">1.31</td><td style="text-align:right">-10.8</td></tr><tr><td style="text-align:left">AMGN</td><td style="text-align:right">362.12</td><td style="text-align:right">4.35</td><td style="text-align:right">195.4</td><td style="text-align:right">25.2</td><td style="text-align:right">21.27</td><td style="text-align:right">0.42</td><td style="text-align:right">-7.5</td></tr><tr><td style="text-align:left">QCOM</td><td style="text-align:right">184.79</td><td style="text-align:right">-9.47</td><td style="text-align:right">194.8</td><td style="text-align:right">19.9</td><td style="text-align:right">7.17</td><td style="text-align:right">1.6</td><td style="text-align:right">-28.9</td></tr><tr><td style="text-align:left">PEP</td><td style="text-align:right">135.4</td><td style="text-align:right">-4.68</td><td style="text-align:right">185.1</td><td style="text-align:right">21.3</td><td style="text-align:right">8.66</td><td style="text-align:right">0.36</td><td style="text-align:right">-21.0</td></tr><tr><td style="text-align:left">ISRG</td><td style="text-align:right">397.68</td><td style="text-align:right">-1.36</td><td style="text-align:right">140.8</td><td style="text-align:right">48.3</td><td style="text-align:right">8.07</td><td style="text-align:right">1.45</td><td style="text-align:right">-34.1</td></tr><tr><td style="text-align:left">ADBE</td><td style="text-align:right">205.02</td><td style="text-align:right">3.84</td><td style="text-align:right">81.5</td><td style="text-align:right">11.7</td><td style="text-align:right">7.1</td><td style="text-align:right">1.4</td><td style="text-align:right">-47.0</td></tr><tr><td style="text-align:left">INTU</td><td style="text-align:right">261.0</td><td style="text-align:right">1.14</td><td style="text-align:right">71.4</td><td style="text-align:right">15.9</td><td style="text-align:right">3.47</td><td style="text-align:right">0.96</td><td style="text-align:right">-67.9</td></tr></tbody></table></div>
+<h2>💡 주간 총평</h2>
+<p>이번 주 시장은 <strong>반도체·AI 하드웨어 섹터의 강한 모멘텀</strong>이 주도했습니다. ASML(+11.86%), AMD(+11.75%)가 나란히 52주 고점에 근접했고, TSLA(+10.22%)까지 두 자릿수 급등하며 고베타 성장주로의 자금 유입이 뚜렷했습니다. 반면 방어주인 PEP(-4.68%), COST(-2.32%)는 약세를 보여 시장 전반의 <strong>위험 선호(리스크온) 심리 회복</strong>이 관찰됩니다. 다만 AMD(PER 192.4)와 TSLA(PER 385.9)의 극단적 밸류에이션은 상승세의 지속성에 의문을 남깁니다.</p>
+<p>섹터별로는 기술주 내부에서 명암이 엇갈렸습니다. 반도체 장비·GPU가 강세인 가운데 QCOM은 유일한 역성장(-3.5%)과 -9.47% 급락으로 개별 이슈를 드러냈습니다. 한편 INTU(-67.9%), ADBE(-47.0%), NFLX(-45.2%) 등 소프트웨어·미디어 종목은 고점 대비 깊은 조정 상태로, ADBE(PER 11.7)·INTU(PER 15.9)처럼 낙폭 대비 밸류에이션이 매력적인 종목들은 밸류 투자 관점에서 관심 대상입니다. 시가총액 상위권에서는 GOOGL·GOOG의 견조한 상승과 합리적 PER(27배)이 돋보였습니다.</p>
+<p>다음 주에는 <strong>AI 반도체 랠리의 지속 여부</strong>와 <strong>고베타 종목의 차익실현 압력</strong>을 주목해야 합니다. 특히 52주 고점에 도달한 ASML·AMD의 추가 상승 탄력, QCOM의 실적 반등 시그널, 그리고 조정 폭이 큰 대형 기술주(MSFT, META, NFLX)의 반등 여부가 관전 포인트입니다. 방어주에서 성장주로의 로테이션이 지속될지, 아니면 밸류에이션 부담에 따른 되돌림이 나타날지 균형 잡힌 관찰이 필요한 시점입니다.</p>
+<hr>
+<p><em>본 리포트는 AI 자동 분석으로 생성되었으며, 투자 권유가 아닙니다.</em></p>
+        </div>
+      </article>
+      <article class="report" id="report-2026-w25">
+        <header class="report-header">
+          <h1>나스닥100 주간 투자 리포트 — 2026-W25</h1>
+          <div class="report-meta">
+            <span class="report-meta-date">📅 2026년 06월 20일</span>
+            <span class="tag">주간</span>
+          </div>
+        </header>
+        <div class="prose">
+<h1>나스닥100 주간 투자 리포트 — 2026-W25</h1>
+<blockquote><p><strong>분석일:</strong> 2026년 06월 20일 | 대상: 나스닥100 상위 20개 종목</p></blockquote>
+<hr>
+<h2>📌 주간 핵심 이슈 TOP 5</h2>
+<ol><li><strong>반도체 섹터, 강력한 순환매 유입</strong> — QCOM(+11.41%), AMD(+10.02%), TXN(+8.67%), AVGO(+6.69%), NVDA(+2.84%)가 일제히 상승하며 이번 주 시장을 견인했습니다. 특히 AI 가속기와 데이터센터 수요 모멘텀이 매출 성장률(NVDA +85.2%, AVGO +47.9%, AMD +37.8%)로 뒷받침되며, 반도체가 주간 주도 섹터로 부상했습니다. 단기 과열 여부에 유의하되 추세는 견조합니다.</li><li><strong>Adobe 급락, 소프트웨어 밸류에이션 경계감</strong> — ADBE는 주간 -10.8%로 최대 낙폭을 기록하며 52주 고점 대비 -50.3%까지 하락했습니다. PER 11.2배로 역사적 저점권에 진입했으나, AI 경쟁 구도에서의 성장 둔화 우려가 반영된 것으로 보입니다. 밸류에이션 매력과 구조적 리스크가 충돌하는 구간입니다.</li><li><strong>MSFT·NFLX 등 대형주 차별화 하락</strong> — MSFT(-2.8%, 고점比 -31.7%), NFLX(-4.79%, 고점比 -42.3%)는 반도체 강세 속에서도 약세를 보였습니다. 특히 NFLX는 52주 최저가(75.01) 부근까지 근접해 기술적 지지 여부가 관건입니다. 빅테크 내 자금 로테이션이 진행 중임을 시사합니다.</li><li><strong>ASML·TXN·AMD, 52주 고점 임박</strong> — ASML(고점比 -0.7%), AMD(-3.8%), TXN(-2.6%)이 연중 최고가에 근접했습니다. 특히 ASML은 EUV 독점력을 바탕으로 신고가 돌파를 시도 중이며, 반도체 장비 사이클 회복 기대를 반영합니다. 돌파 성공 시 추가 모멘텀이 기대됩니다.</li><li><strong>헬스케어·필수소비재 방어주 부진</strong> — AMGN(-4.65%), ISRG(-1.48%), PEP(-1.19%), COST(-2.48%) 등 저베타 방어 섹터가 약세를 보였습니다. 위험선호 심리가 성장주로 쏠리며 방어주 매력이 일시적으로 후퇴한 모습으로, 리스크온 국면을 방증합니다.</li></ol>
+<h2>📋 종목별 한줄 요약</h2>
+<ul><li><strong>NVDA (NVIDIA Corporation)</strong>: 시총 1위(5.1조$) 수성, 매출 +85.2% 압도적 성장과 주간 +2.84% 강세로 AI 대장주 지위 견고.</li><li><strong>GOOGL (Alphabet Inc.)</strong>: 주간 +2.87%, PER 28.1배로 빅테크 내 합리적 밸류에이션, 매출 +21.8% 양호한 성장세.</li><li><strong>GOOG (Alphabet Inc.)</strong>: 주간 +3.06%로 클래스주 중 상승폭 상위, 펀더멘털 견조하나 고점比 -9.2% 회복 여력 보유.</li><li><strong>AAPL (Apple Inc.)</strong>: 주간 +0.81%로 안정적, 고점比 -6.1%로 대형주 중 가장 고점에 근접, PER 36.1배는 부담 요인.</li><li><strong>MSFT (Microsoft Corporation)</strong>: 주간 -2.8%, 고점比 -31.7%로 부진하나 PER 22.6배·매출 +18.3%로 중장기 매력 유지.</li><li><strong>AMZN (Amazon.com, Inc.)</strong>: 주간 +1.19%, 매출 +16.6% 견조, 고점比 -12.3%로 안정적 회복 흐름.</li><li><strong>AVGO (Broadcom Inc.)</strong>: 주간 +6.69% 강세, 매출 +47.9% 고성장이나 PER 68.2배로 밸류 부담 공존.</li><li><strong>TSLA (Tesla, Inc.)</strong>: 주간 +0.34% 보합, PER 367배 극단적 고평가로 실적 대비 밸류 정당화 과제.</li><li><strong>META (Meta Platforms, Inc.)</strong>: 주간 +1.64%, 매출 +33.1%·PER 21배로 성장 대비 저평가 매력, 고점比 -27.5%.</li><li><strong>AMD (Advanced Micro Devices, Inc.)</strong>: 주간 +10.02% 급등, 52주 고점 근접(-3.8%), PER 179.7배는 기대치 과열 신호.</li><li><strong>ASML (ASML Holding N.V.)</strong>: 주간 +1.59%, 52주 고점 임박(-0.7%), EUV 독점력 기반 신고가 돌파 시도.</li><li><strong>COST (Costco Wholesale Corporation)</strong>: 주간 -2.48%, 방어주 약세 동참, PER 48배로 안정성 대비 고평가.</li><li><strong>NFLX (Netflix, Inc.)</strong>: 주간 -4.79%, 52주 저점 근접·고점比 -42.3%로 기술적 지지선 점검 필요.</li><li><strong>TXN (Texas Instruments Incorporated)</strong>: 주간 +8.67%, 52주 고점 근접(-2.6%), 아날로그 반도체 회복 기대 반영.</li><li><strong>QCOM (QUALCOMM Incorporated)</strong>: 주간 +11.41% 최대 상승, 다만 매출 -3.5% 역성장으로 실적 동반 여부 관건.</li><li><strong>PEP (PepsiCo, Inc.)</strong>: 주간 -1.19%, 베타 0.36 방어주이나 고점比 -17.2%로 부진 지속.</li><li><strong>AMGN (Amgen Inc.)</strong>: 주간 -4.65% 급락, 매출 +5.8% 저성장, 베타 0.42 방어 성격에도 약세.</li><li><strong>ISRG (Intuitive Surgical, Inc.)</strong>: 주간 -1.48%, 52주 저점 근접·고점比 -32.6%, 매출 +23.0% 성장은 견조.</li><li><strong>ADBE (Adobe Inc.)</strong>: 주간 -10.8% 폭락, 고점比 -50.3%·PER 11.2배로 저평가 vs AI 경쟁 우려 충돌.</li><li><strong>INTU (Intuit Inc.)</strong>: 주간 -3.58%, 고점比 -67.2%로 낙폭 최대, PER 16.3배로 밸류 매력 부각되나 추세 약세.</li></ul>
+<h2>📊 밸류에이션 비교표</h2>
+<div class="table-wrap"><table><thead><tr><th style="text-align:left">종목</th><th style="text-align:right">현재가($)</th><th style="text-align:right">주간등락(%)</th><th style="text-align:right">시총(B$)</th><th style="text-align:right">PER</th><th style="text-align:right">PBR</th><th style="text-align:right">베타</th><th style="text-align:right">52주고점比(%)</th></tr></thead><tbody><tr><td style="text-align:left">NVDA</td><td style="text-align:right">210.69</td><td style="text-align:right">+2.84</td><td style="text-align:right">5103.1</td><td style="text-align:right">32.3</td><td style="text-align:right">26.11</td><td style="text-align:right">2.20</td><td style="text-align:right">-10.9</td></tr><tr><td style="text-align:left">GOOGL</td><td style="text-align:right">368.03</td><td style="text-align:right">+2.87</td><td style="text-align:right">4490.9</td><td style="text-align:right">28.1</td><td style="text-align:right">9.31</td><td style="text-align:right">1.24</td><td style="text-align:right">-9.9</td></tr><tr><td style="text-align:left">GOOG</td><td style="text-align:right">367.46</td><td style="text-align:right">+3.06</td><td style="text-align:right">4484.0</td><td style="text-align:right">28.1</td><td style="text-align:right">9.30</td><td style="text-align:right">1.24</td><td style="text-align:right">-9.2</td></tr><tr><td style="text-align:left">AAPL</td><td style="text-align:right">298.01</td><td style="text-align:right">+0.81</td><td style="text-align:right">4377.0</td><td style="text-align:right">36.1</td><td style="text-align:right">41.05</td><td style="text-align:right">1.09</td><td style="text-align:right">-6.1</td></tr><tr><td style="text-align:left">MSFT</td><td style="text-align:right">379.40</td><td style="text-align:right">-2.80</td><td style="text-align:right">2818.3</td><td style="text-align:right">22.6</td><td style="text-align:right">6.80</td><td style="text-align:right">1.10</td><td style="text-align:right">-31.7</td></tr><tr><td style="text-align:left">AMZN</td><td style="text-align:right">244.39</td><td style="text-align:right">+1.19</td><td style="text-align:right">2628.9</td><td style="text-align:right">31.5</td><td style="text-align:right">5.95</td><td style="text-align:right">1.44</td><td style="text-align:right">-12.3</td></tr><tr><td style="text-align:left">AVGO</td><td style="text-align:right">411.35</td><td style="text-align:right">+6.69</td><td style="text-align:right">1957.0</td><td style="text-align:right">68.2</td><td style="text-align:right">22.32</td><td style="text-align:right">1.43</td><td style="text-align:right">-16.9</td></tr><tr><td style="text-align:left">TSLA</td><td style="text-align:right">400.49</td><td style="text-align:right">+0.34</td><td style="text-align:right">1504.1</td><td style="text-align:right">367.4</td><td style="text-align:right">18.29</td><td style="text-align:right">1.80</td><td style="text-align:right">-19.7</td></tr><tr><td style="text-align:left">META</td><td style="text-align:right">577.22</td><td style="text-align:right">+1.64</td><td style="text-align:right">1465.2</td><td style="text-align:right">21.0</td><td style="text-align:right">6.01</td><td style="text-align:right">1.23</td><td style="text-align:right">-27.5</td></tr><tr><td style="text-align:left">AMD</td><td style="text-align:right">537.37</td><td style="text-align:right">+10.02</td><td style="text-align:right">876.2</td><td style="text-align:right">179.7</td><td style="text-align:right">13.59</td><td style="text-align:right">2.49</td><td style="text-align:right">-3.8</td></tr><tr><td style="text-align:left">ASML</td><td style="text-align:right">1929.68</td><td style="text-align:right">+1.59</td><td style="text-align:right">743.7</td><td style="text-align:right">64.5</td><td style="text-align:right">1714.71</td><td style="text-align:right">1.40</td><td style="text-align:right">-0.7</td></tr><tr><td style="text-align:left">COST</td><td style="text-align:right">951.45</td><td style="text-align:right">-2.48</td><td style="text-align:right">421.9</td><td style="text-align:right">48.0</td><td style="text-align:right">25.52</td><td style="text-align:right">0.87</td><td style="text-align:right">-13.2</td></tr><tr><td style="text-align:left">NFLX</td><td style="text-align:right">77.38</td><td style="text-align:right">-4.79</td><td style="text-align:right">325.8</td><td style="text-align:right">25.0</td><td style="text-align:right">10.47</td><td style="text-align:right">1.49</td><td style="text-align:right">-42.3</td></tr><tr><td style="text-align:left">TXN</td><td style="text-align:right">322.86</td><td style="text-align:right">+8.67</td><td style="text-align:right">293.8</td><td style="text-align:right">55.3</td><td style="text-align:right">17.51</td><td style="text-align:right">1.31</td><td style="text-align:right">-2.6</td></tr><tr><td style="text-align:left">QCOM</td><td style="text-align:right">226.11</td><td style="text-align:right">+11.41</td><td style="text-align:right">238.3</td><td style="text-align:right">24.3</td><td style="text-align:right">8.78</td><td style="text-align:right">1.60</td><td style="text-align:right">-13.0</td></tr><tr><td style="text-align:left">PEP</td><td style="text-align:right">142.02</td><td style="text-align:right">-1.19</td><td style="text-align:right">194.1</td><td style="text-align:right">22.3</td><td style="text-align:right">9.09</td><td style="text-align:right">0.36</td><td style="text-align:right">-17.2</td></tr><tr><td style="text-align:left">AMGN</td><td style="text-align:right">337.60</td><td style="text-align:right">-4.65</td><td style="text-align:right">182.2</td><td style="text-align:right">23.5</td><td style="text-align:right">19.83</td><td style="text-align:right">0.42</td><td style="text-align:right">-13.7</td></tr><tr><td style="text-align:left">ISRG</td><td style="text-align:right">406.78</td><td style="text-align:right">-1.48</td><td style="text-align:right">144.1</td><td style="text-align:right">49.5</td><td style="text-align:right">8.25</td><td style="text-align:right">1.45</td><td style="text-align:right">-32.6</td></tr><tr><td style="text-align:left">ADBE</td><td style="text-align:right">195.16</td><td style="text-align:right">-10.80</td><td style="text-align:right">77.6</td><td style="text-align:right">11.2</td><td style="text-align:right">6.76</td><td style="text-align:right">1.40</td><td style="text-align:right">-50.3</td></tr><tr><td style="text-align:left">INTU</td><td style="text-align:right">267.00</td><td style="text-align:right">-3.58</td><td style="text-align:right">73.0</td><td style="text-align:right">16.3</td><td style="text-align:right">3.55</td><td style="text-align:right">0.96</td><td style="text-align:right">-67.2</td></tr></tbody></table></div>
+<h2>💡 주간 총평</h2>
+<p>이번 주(2026-W25) 시장은 <strong>반도체 섹터로의 뚜렷한 자금 집중</strong>이 특징이었습니다. QCOM(+11.41%), AMD(+10.02%), TXN(+8.67%), AVGO(+6.69%) 등 칩 관련주가 두 자릿수 또는 그에 준하는 강세를 보이며 지수를 끌어올렸고, NVIDIA는 5조 달러 시총을 유지하며 대장주 지위를 공고히 했습니다. AI 인프라 투자 사이클이 매출 성장률(NVDA +85.2%, AVGO +47.9%, AMD +37.8%)로 실증되며 투자심리를 자극한 것으로 해석됩니다. 다만 AMD(PER 179.7배)와 AVGO(PER 68.2배)의 밸류에이션은 실적 기대치가 이미 상당 부분 선반영된 수준이어서, 향후 가이던스 충족 여부에 따라 변동성이 확대될 수 있습니다.</p>
+<p>반면 <strong>소프트웨어·방어주는 차별화된 약세</strong>를 나타냈습니다. Adobe는 주간 -10.8% 급락하며 52주 고점 대비 절반 수준(-50.3%)으로 떨어졌고, INTU(-3.58%, 고점比 -67.2%) 역시 부진했습니다. 이들 종목은 AI 경쟁 환경에서의 성장 지속성에 대한 시장의 의구심을 반영하고 있으나, PER이 각각 11.2배·16.3배로 낮아져 밸류에이션 관점에서는 역발상 접근 후보로 검토할 여지가 있습니다. 한편 AMGN(-4.65%), PEP(-1.19%), COST(-2.48%) 등 저베타 방어주가 동반 약세를 보인 점은 시장이 전반적으로 <strong>위험선호(리스크온)</strong> 국면에 있음을 시사합니다.</p>
+<p>다음 주에는 첫째, <strong>52주 신고가에 근접한 ASML·TXN·AMD의 돌파 성공 여부</strong>가 반도체 추세의 지속성을 가늠할 핵심 변수입니다. 둘째, <strong>QCOM의 급등(+11.41%)이 매출 -3.5% 역성장이라는 펀더멘털과 괴리</strong>되어 있어 단기 과열 조정 가능성에 유의해야 합니다. 셋째, MSFT·NFLX 등 고점 대비 낙폭이 큰 대형주가 지지선을 확보할지, 추가 하락으로 이어질지 관찰이 필요합니다. 전반적으로 성장주 내에서도 섹터·종목 간 차별화가 심화되고 있어, 모멘텀 추종보다는 밸류에이션과 실적 성장의 균형을 고려한 선별적 접근이 유효한 시점입니다.</p>
+<hr>
+<p><em>본 리포트는 AI 자동 분석으로 생성되었으며, 투자 권유가 아닙니다.</em></p>
+        </div>
+      </article>
+    </main>
+  </div>
+</div>
+
+<script>
+(function () {
+  var buttons = document.querySelectorAll('.report-item');
+  var articles = document.querySelectorAll('.report');
+
+  function selectReport(slug, opts) {
+    opts = opts || {};
+    buttons.forEach(function (b) {
+      b.classList.toggle('active', b.dataset.slug === slug);
+    });
+    articles.forEach(function (a) {
+      a.classList.toggle('active', a.id === 'report-' + slug);
+    });
+    if (opts.scroll !== false) {
+      document.querySelector('.main').scrollTo({ top: 0, behavior: 'auto' });
+    }
+    if (opts.pushHash !== false) {
+      history.replaceState(null, '', '#' + slug);
+    }
+  }
+
+  buttons.forEach(function (b) {
+    b.addEventListener('click', function () {
+      selectReport(b.dataset.slug);
+    });
+  });
+
+  var initial = (location.hash || '').replace('#', '');
+  var hasInitial = initial && document.getElementById('report-' + initial);
+  if (hasInitial) {
+    selectReport(initial, { scroll: false, pushHash: false });
+  }
+})();
+</script>
+</body>
+</html>
